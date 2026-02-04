@@ -1,0 +1,19 @@
+FROM php:8.2-fpm-alpine3.23
+
+# Dependências do sistema
+RUN apk add --no-cache \
+    git \
+    unzip \
+    libpng-dev \
+    libxml2-dev \
+    oniguruma-dev \
+    curl \
+    bash \
+    && docker-php-ext-install pdo_mysql
+
+# Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+#docker compose exec backend sh
+
+WORKDIR /var/www
