@@ -4,44 +4,36 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
-    /**
-     * Run the migrations.
-     */
+return new class extends Migration {
     public function up(): void
     {
         Schema::create('filmes', function (Blueprint $table) {
-    $table->id();
+            $table->id();
 
-    // Identidade externa (TMDB)
-    $table->unsignedInteger('tmdb_id')->unique();
+            // Identidade externa (opcional, única)
+            $table->unsignedInteger('tmdb_id')->nullable()->unique();
 
-    // Dados principais
-    $table->string('titulo');
-    $table->text('sinopse');
-    $table->date('data_lancamento')->nullable();
-    $table->integer('duracao_minutos')->nullable();
+            // Dados centrais
+            $table->string('titulo', 255);
+            $table->text('sinopse')->nullable();
 
-    // Assets
-    $table->string('poster_path')->nullable();
-    $table->string('backdrop_path')->nullable();
+            // Informações temporais
+            $table->date('data_lancamento')->nullable();
+            $table->unsignedSmallInteger('duracao_minutos')->nullable();
 
-    // Métricas (home / ordenação)
-    $table->decimal('popularidade', 8, 4)->nullable();
-    $table->decimal('nota_media', 3, 1)->nullable();
-    $table->integer('votos')->nullable();
+            // Mídias
+            $table->string('trailer_url', 500)->nullable();
+            $table->string('poster_url', 255)->nullable();
+            $table->string('backdrop_url', 255)->nullable();
 
-    // Controle de sincronização
-    $table->boolean('detalhes_completos')->default(false);
+            // Estado
+            $table->enum('status', ['ativo', 'inativo'])->default('ativo');
 
-    $table->timestamps();
-});
+            // Timestamps padrão Laravel
+            $table->timestamps();
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('filmes');
