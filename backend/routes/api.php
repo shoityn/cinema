@@ -16,11 +16,10 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-Route::prefix('filmes')->group(function () {
-    Route::get('/', [FilmeController::class, 'index']);      // LISTAGEM
-    Route::get('/{filme}', [FilmeController::class, 'show']); // DETALHE
+// Rotas CRUD para filmes com nomes padrão (filmes.index, filmes.store, ...)
+Route::apiResource('filmes', FilmeController::class)
+    ->only(['index', 'store', 'show', 'update', 'destroy']);
 
-    Route::post('/', [FilmeController::class, 'store']);     // CREATE
-    Route::put('/{filme}', [FilmeController::class, 'update']); // UPDATE
-    Route::delete('/{filme}', [FilmeController::class, 'destroy']); //DELETE(inativa)
-});
+
+Route::patch('/filmes/{filme}/ativar', [FilmeController::class, 'activate'])
+    ->name('filmes.activate');

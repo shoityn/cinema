@@ -6,6 +6,9 @@ use App\Http\Requests\StoreFilmeRequest;
 use App\Http\Requests\UpdateFilmeRequest;
 use App\Models\Filme;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
+use Throwable;
 
 class FilmeController extends Controller
 {
@@ -14,12 +17,27 @@ class FilmeController extends Controller
      */
     public function store(StoreFilmeRequest $request): JsonResponse
     {
-        $filme = Filme::create($request->validated());
+        $data = $request->validated();
 
-        return response()->json([
-            'message' => 'Filme criado com sucesso.',
-            'data' => $filme,
-        ], 201);
+        if (empty($data['status'])) {
+            $data['status'] = 'ativo';
+        }
+
+        try {
+            $filme = DB::transaction(function () use ($data) {
+                return Filme::create($data);
+            });
+
+            return response()->json([
+                'message' => 'Filme criado com sucesso.',
+                'data' => $filme->fresh(),
+            ], 201);
+        } catch (Throwable $e) {
+            return response()->json([
+                'message' => 'Erro ao criar filme.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -27,12 +45,23 @@ class FilmeController extends Controller
      */
     public function update(UpdateFilmeRequest $request, Filme $filme): JsonResponse
     {
-        $filme->update($request->validated());
+        $data = $request->validated();
 
-        return response()->json([
-            'message' => 'Filme atualizado com sucesso.',
-            'data' => $filme->fresh(),
-        ]);
+        try {
+            DB::transaction(function () use ($filme, $data) {
+                $filme->update($data);
+            });
+
+            return response()->json([
+                'message' => 'Filme atualizado com sucesso.',
+                'data' => $filme->fresh(),
+            ]);
+        } catch (Throwable $e) {
+            return response()->json([
+                'message' => 'Erro ao atualizar filme.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
 
@@ -42,19 +71,53 @@ class FilmeController extends Controller
     public function destroy(Filme $filme): JsonResponse
     {
         if ($filme->status === 'inativo') {
+            return response()->json(['message' => 'Filme já está inativo.'], 409);
+        }
+
+        try {
+            DB::transaction(function () use ($filme) {
+                $filme->update(['status' => 'inativo']);
+            });
+
             return response()->json([
-                'message' => 'Filme já está inativo.',
+                'message' => 'Filme desativado com sucesso.',
+                'data' => $filme->fresh(),
+            ]);
+        } catch (Throwable $e) {
+            return response()->json([
+                'message' => 'Erro ao desativar filme.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+    /**
+     * Ativa um filme (soft business delete).
+     */
+    public function activate(Filme $filme): JsonResponse
+    {
+        if ($filme->status === 'ativo') {
+            return response()->json([
+                'message' => 'Filme já está ativo.',
             ], 409);
         }
 
-        $filme->update([
-            'status' => 'inativo',
-        ]);
+        try {
+            DB::transaction(function () use ($filme) {
+                $filme->update(['status' => 'ativo']);
+            });
 
-        return response()->json([
-            'message' => 'Filme desativado com sucesso.',
-            'data' => $filme->fresh(),
-        ]);
+            return response()->json([
+                'message' => 'Filme reativado com sucesso.',
+                'data' => $filme->fresh(),
+            ]);
+        } catch (Throwable $e) {
+            return response()->json([
+                'message' => 'Erro ao reativar filme.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -63,12 +126,10 @@ class FilmeController extends Controller
     public function show(Filme $filme): JsonResponse
     {
         if ($filme->status !== 'ativo') {
-            abort(404);
+            return response()->json(['message' => 'Filme não encontrado.'], 404);
         }
 
-        return response()->json([
-            'data' => $filme,
-        ]);
+        return response()->json(['data' => $filme]);
     }
 
     /**

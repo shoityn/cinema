@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use DomainException;
 
 class Filme extends Model
 {
@@ -40,6 +41,24 @@ class Filme extends Model
                 throw new \RuntimeException('tmdb_id não pode ser alterado após a criação do filme.');
             }
         });
+    }
+
+    public function activate(): void
+    {
+        if ($this->status === 'ativo') {
+            throw new DomainException('Filme já está ativo.');
+        }
+
+        $this->update(['status' => 'ativo']);
+    }
+
+    public function deactivate(): void
+    {
+        if ($this->status === 'inativo') {
+            throw new DomainException('Filme já está inativo.');
+        }
+
+        $this->update(['status' => 'inativo']);
     }
 
 
