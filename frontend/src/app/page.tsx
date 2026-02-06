@@ -1,24 +1,42 @@
+import Image from "next/image";
+import { getFilmes } from "@/lib/services/filmes";
+import { getPosterUrl } from "@/lib/tmbd";
 
+export default async function Home() {
+  const filmes = await getFilmes();
 
+  return (
+    <main className="p-6">
+      <h1 className="text-2xl font-bold mb-6">Em cartaz</h1>
 
-export default function Home(){
- return(
-   <div>
-    <h1>Bem-vindo pra Home</h1>
-  
-  
-  </div>
- )
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+        {filmes.map((filme) => {
+          const posterUrl =
+            filme.tmdb_id && filme.poster_url
+              ? getPosterUrl(filme.poster_url)
+              : null;
+
+          return (
+            <div
+              key={filme.id}
+              className="rounded-lg overflow-hidden shadow hover:shadow-lg transition"
+            >
+              <div className="relative w-full aspect-[2/3] bg-gray-200">
+                {/* <Image
+                  src={posterUrl ?? "/no_poster.png"}
+                  alt={filme.titulo}
+                  fill
+                  className="object-cover"
+                /> */}
+              </div>
+
+              <div className="p-2 text-center">
+                <h2 className="text-sm font-semibold">{filme.titulo}</h2>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </main>
+  );
 }
-
-// chaveapi:?api_key=0c40d90f31a9ad0c467c07577e69ddb8
-
-// base url: https://api.themoviedb.org/3/
-
-// exemplo de url: https://api.themoviedb.org/3/movie/550?api_key=0c40d90f31a9ad0c467c07577e69ddb8
-
-// exemplo de url de um grupo: https://api.themoviedb.org/3/movie/now_playing?api_key=0c40d90f31a9ad0c467c07577e69ddb8
-//now_playing,top_rated,upcoming
-
-//se quise rmudar a linguagem, no final coloque:  &language=pt-BR
-
