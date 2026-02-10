@@ -21,14 +21,14 @@ export default async function Home() {
               key={filme.id}
               className="rounded-lg overflow-hidden shadow hover:shadow-lg transition"
             >
-              <div className="relative w-full aspect-[2/3] bg-gray-200">
-                {/* <Image
-                  src={posterUrl ?? "/no_poster.png"}
+              {/* <div className="relative w-full aspect-[2/3] bg-gray-200">
+                <Image
+                  src={posterUrl ?? "/public/no_poster.png"}
                   alt={filme.titulo}
                   fill
                   className="object-cover"
-                /> */}
-              </div>
+                />
+              </div> */}
 
               <div className="p-2 text-center">
                 <h2 className="text-sm font-semibold">{filme.titulo}</h2>

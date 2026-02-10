@@ -1,46 +1,21 @@
-
+version: "3.9"
 
 services:
-  mysql:
-    image: mysql:8.0.45-oraclelinux9
-    container_name: cinema-mysql
-    environment:
-      #MYSQL_USER: root
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: cinema
-    volumes:
-      - mysql_data:/var/lib/mysql
-    ports:
-      - "3307:3306"
-      #nossa porta 3307 porta do docker 3306
-
   backend:
     build: ./backend
     container_name: cinema-backend
-    depends_on:
-      - mysql
     volumes:
       - ./backend:/var/www
-    environment:
-      DB_HOST: mysql
-      DB_DATABASE: cinema
-      DB_USERNAME: root
-      DB_PASSWORD: root
     ports:
       - "8000:8000"
 
-
   frontend:
-    container_name: cinema-frontend
     build:
       context: ./frontend
-    volumes:
-      - ./frontend:/app
     ports:
       - "3000:3000"
-    stdin_open: true
-    tty: true
-    command: sh
-
-volumes:
-  mysql_data:
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
