@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FilmeController;
+use App\Http\Controllers\Api\TmdbController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 
@@ -23,3 +24,7 @@ Route::apiResource('filmes', FilmeController::class)
 
 Route::patch('/filmes/{filme}/ativar', [FilmeController::class, 'activate'])
     ->name('filmes.activate');
+
+Route::get('/tmdb/now-playing', [TmdbController::class, 'nowPlaying']);
+
+Route::get('/tmdb/search', [TmdbController::class, 'search']);

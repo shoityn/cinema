@@ -14,6 +14,11 @@ return [
     |
     */
 
+    'tmdb' => [
+        'key' => env('TMDB_API_KEY'),
+        'url' => env('TMDB_BASE_URL'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
