@@ -11,10 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('generos', function (Blueprint $table) {
+        Schema::create('genres', function (Blueprint $table) {
             $table->id();
-            $table->unsignedInteger('tmdb_id')->unique();
-            $table->string('nome');
+
+            $table->unsignedBigInteger('tmdb_id')->nullable()->unique();
+
+            $table->string('name');
+            $table->string('slug')->unique();
+
+            $table->boolean('is_official')->default(true);
+
             $table->timestamps();
         });
     }
@@ -24,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('generos');
+        Schema::dropIfExists('genres');
     }
 };
