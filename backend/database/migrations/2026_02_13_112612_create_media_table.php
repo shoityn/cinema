@@ -12,11 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('media', function (Blueprint $table) {
-            $table->id();
+            $table->id('media_id');
 
-            $table->foreignId('movie_id')
-                ->constrained()
-                ->cascadeOnDelete();
+            $table->foreignId('movie_id')->constrained('movies', 'movie_id')->cascadeOnDelete();
 
             $table->enum('type', ['poster', 'backdrop', 'logo', 'trailer']);
             $table->enum('provider', ['tmdb', 'local']);

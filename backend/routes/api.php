@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\FilmeController;
+use App\Http\Controllers\MovieController;
 use App\Http\Controllers\Api\TmdbController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -18,12 +18,15 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // Rotas CRUD para filmes com nomes padrão (filmes.index, filmes.store, ...)
-Route::apiResource('filmes', FilmeController::class)
-    ->only(['index', 'store', 'show', 'update', 'destroy']);
+Route::prefix('movies')->group(function () {
+    Route::get('/', [MovieController::class, 'index']);
+    Route::get('/{movie}', [MovieController::class, 'show']);
+    Route::post('/', [MovieController::class, 'store']);
+    Route::put('/{movie}', [MovieController::class, 'update']);
+    Route::patch('/{movie}/publish', [MovieController::class, 'publish']);
+    Route::patch('/{movie}/archive', [MovieController::class, 'archive']);
+});
 
-
-Route::patch('/filmes/{filme}/ativar', [FilmeController::class, 'activate'])
-    ->name('filmes.activate');
 
 Route::get('/tmdb/now-playing', [TmdbController::class, 'nowPlaying']);
 

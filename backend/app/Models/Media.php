@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Media extends Model
 {
+    protected $primaryKey = 'media_id';
+    public $incrementing = true;
+    protected $keyType = 'int';
+
     protected $fillable = [
         'movie_id',
         'type',
@@ -23,6 +27,6 @@ class Media extends Model
 
     public function movie()
     {
-        return $this->belongsTo(Movie::class);
+        return $this->belongsTo(Movie::class, 'movie_id', 'movie_id');
     }
 }
