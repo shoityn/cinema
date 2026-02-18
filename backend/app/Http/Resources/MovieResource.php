@@ -13,7 +13,7 @@ class MovieResource extends JsonResource
     $resolver = app(MediaUrlResolver::class);
 
     return [
-        'id' => $this->id,
+        'movie_id' => $this->movie_id,
         'title' => $this->title,
 
         'genres' => GenreResource::collection($this->whenLoaded('genres')),

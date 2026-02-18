@@ -1,18 +1,18 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 
 export function AddFilmeForm() {
   const [formData, setFormData] = useState({
@@ -25,28 +25,28 @@ export function AddFilmeForm() {
     poster_url: "",
     backdrop_url: "",
     status: "ativo",
-  })
+  });
 
   function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-    }))
+    }));
   }
 
   function handleStatusChange(value: string) {
     setFormData((prev) => ({
       ...prev,
       status: value,
-    }))
+    }));
   }
 
   function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    console.log("Dados enviados:", formData)
+    e.preventDefault();
+    console.log("Dados enviados:", formData);
 
     // Aqui futuramente você fará:
     // fetch("http://localhost:8000/api/movies", { ... })
@@ -60,29 +60,6 @@ export function AddFilmeForm() {
 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="id">ID</Label>
-              <Input
-                id="id"
-                name="id"
-                value={formData.id}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="tmdb_id">TMDB ID</Label>
-              <Input
-                id="tmdb_id"
-                name="tmdb_id"
-                value={formData.tmdb_id}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-
           <div>
             <Label htmlFor="titulo">Título</Label>
             <Input
@@ -105,15 +82,40 @@ export function AddFilmeForm() {
             />
           </div>
 
-          <div>
-            <Label htmlFor="data_lancamento">Data de Lançamento</Label>
-            <Input
-              type="date"
-              id="data_lancamento"
-              name="data_lancamento"
-              value={formData.data_lancamento}
-              onChange={handleChange}
-            />
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="data_lancamento">Data de Lançamento</Label>
+              <Input
+                type="date"
+                id="data_lancamento"
+                name="data_lancamento"
+                value={formData.data_lancamento}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="id">ID</Label>
+              <Input
+                id="id"
+                name="id"
+                value={formData.id}
+                disabled
+                onChange={handleChange}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="tmdb_id">TMDB ID</Label>
+              <Input
+                id="tmdb_id"
+                name="tmdb_id"
+                value={formData.tmdb_id}
+                disabled
+                onChange={handleChange}
+              />
+            </div>
+
           </div>
 
           <div>
@@ -148,10 +150,7 @@ export function AddFilmeForm() {
 
           <div>
             <Label>Status</Label>
-            <Select
-              value={formData.status}
-              onValueChange={handleStatusChange}
-            >
+            <Select value={formData.status} onValueChange={handleStatusChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o status" />
               </SelectTrigger>
@@ -169,5 +168,5 @@ export function AddFilmeForm() {
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }

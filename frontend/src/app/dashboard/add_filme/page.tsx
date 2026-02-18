@@ -1,6 +1,7 @@
 
 
 import { AddFilmeForm } from "@/components/forms/AddFilmeForm"
+import { SearchBar } from "@/components/forms/searchAddMovie";
 
 export default function AddFilmePage() {
   return (
@@ -11,6 +12,7 @@ export default function AddFilmePage() {
           Preencha os dados para cadastrar um novo filme.
         </p>
       </div>
+      <SearchBar/>
 
       <AddFilmeForm />
     </div>

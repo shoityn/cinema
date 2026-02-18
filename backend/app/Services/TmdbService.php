@@ -110,4 +110,19 @@ class TmdbService
             ];
         })->toArray();
     }
+
+    public function getMovieDetails(int $tmdbId): array
+    {
+        $response = Http::get("{$this->baseUrl}/movie/{$tmdbId}", [
+            'api_key' => $this->apiKey,
+            'language' => 'pt-BR',
+            'append_to_response' => 'images,videos'
+        ]);
+
+        if (!$response->successful()) {
+            throw new \Exception('Erro TMDB details: ' . $response->body());
+        }
+
+        return $response->json();
+    }
 }

@@ -31,3 +31,6 @@ Route::prefix('movies')->group(function () {
 Route::get('/tmdb/now-playing', [TmdbController::class, 'nowPlaying']);
 
 Route::get('/tmdb/search', [TmdbController::class, 'search']);
+
+// Detalhes completos (para preencher form)
+    Route::get('/movies/{tmdbId}', [TmdbController::class, 'details']);

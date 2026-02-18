@@ -11,9 +11,11 @@ class GenreResource extends JsonResource
     public function toArray($request)
     {
         return [
-            'id' => $this->id,
+            'id' => $this->getKey(),
+            'tmdb_id' => $this->tmdb_id,
             'name' => $this->name,
             'slug' => $this->slug,
+            'is_official' => (bool) $this->is_official,
         ];
     }
 }

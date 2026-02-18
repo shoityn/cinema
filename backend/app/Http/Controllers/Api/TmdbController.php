@@ -58,32 +58,4 @@ class TmdbController extends Controller
         return response()->json($limited);
     }
 
-
-    //função para pesquisa de todos 
-    // public function search(Request $request, TmdbService $tmdb)
-    // {
-    //     $query = $request->query('query');
-
-    //     if (!$query) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Parâmetro "query" é obrigatório.'
-    //         ], 400);
-    //     }
-
-    //     try {
-    //         $movies = $tmdb->search($query, 5);
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'data' => $movies
-    //         ]);
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Erro ao buscar filmes no TMDB',
-    //             'error' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
 }
