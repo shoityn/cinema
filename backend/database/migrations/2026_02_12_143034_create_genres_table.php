@@ -12,9 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('genres', function (Blueprint $table) {
-            $table->id('genre_id');
-
-            $table->unsignedBigInteger('tmdb_id')->nullable()->unique();
+            $table->id(); // id local autoincrement
+            $table->unsignedInteger('tmdb_id')->unique();
 
             $table->string('name');
             $table->string('slug')->unique();

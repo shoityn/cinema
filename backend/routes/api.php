@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MovieController;
-use App\Http\Controllers\Api\TmdbController;
+use App\Http\Controllers\TmdbController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 
@@ -27,10 +27,14 @@ Route::prefix('movies')->group(function () {
     Route::patch('/{movie}/archive', [MovieController::class, 'archive']);
 });
 
-
 Route::get('/tmdb/now-playing', [TmdbController::class, 'nowPlaying']);
 
 Route::get('/tmdb/search', [TmdbController::class, 'search']);
 
 // Detalhes completos (para preencher form)
+// Route::get('/movies/{tmdbId}', [TmdbController::class, 'details']);
+
+Route::prefix('tmdb')->group(function () {
+    Route::get('/search', [TmdbController::class, 'search']); //
     Route::get('/movies/{tmdbId}', [TmdbController::class, 'details']);
+});

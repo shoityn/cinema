@@ -172,4 +172,64 @@ class MovieService
             return $movie->fresh();
         });
     }
+
+    /**
+     * Create a movie with media and genres from a validated payload.
+     * This method orchestrates persistence but intentionally leaves
+     * strategic business rules as TODOs so the caller/team can implement them.
+     */
+    public function createWithMedia(array $data): Movie
+    {
+        return DB::transaction(function () use ($data) {
+
+            // TODO: Business rules to consider before creating:
+            // - duplicate detection by tmdb_id (decide whether to update or fail)
+            // - validation of provider-specific requirements (e.g. local file handling)
+            // - selection/normalization of primary media when multiple items arrive
+            // - any permission/owner attribution rules
+
+            $movie = Movie::create([
+                'title' => $data['title'] ?? null,
+                'overview' => $data['overview'] ?? null,
+                'release_date' => $data['release_date'] ?? null,
+                'duration_minutes' => $data['duration_minutes'] ?? null,
+                'status' => $data['status'] ?? 'draft',
+                'tmdb_id' => $data['tmdb_id'] ?? null,
+                'imdb_id' => $data['imdb_id'] ?? null,
+                'homepage' => $data['homepage'] ?? null,
+            ]);
+
+            // media handling
+            $mediaPayload = $data['media'] ?? [];
+
+            $types = ['poster', 'backdrop', 'logo', 'trailer'];
+
+            foreach ($types as $type) {
+                if (empty($mediaPayload[$type]) || !is_array($mediaPayload[$type])) {
+                    continue;
+                }
+
+                $m = $mediaPayload[$type];
+
+                $mediaData = [
+                    'movie_id' => $movie->movie_id,
+                    'type' => $type,
+                    'provider' => $m['provider'] ?? 'tmdb',
+                    'path' => $m['path'] ?? null,
+                    'external_key' => $m['external_key'] ?? null,
+                    'metadata' => $m['metadata'] ?? null,
+                    'is_primary' => true, // default incoming single items as primary
+                ];
+
+                Media::create($mediaData);
+            }
+
+            // genres sync (expects array of local genre ids)
+            if (!empty($data['genres']) && is_array($data['genres'])) {
+                $movie->genres()->sync($data['genres']);
+            }
+
+            return $movie->fresh()->load(['genres', 'media']);
+        });
+    }
 }
