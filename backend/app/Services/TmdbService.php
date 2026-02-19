@@ -69,6 +69,32 @@ class TmdbService
     }
 
 
+    /**
+     * Given an array of TMDB ids, fetch detailed movie information for each.
+     * Returns an array of TMDB detail payloads keyed by tmdb id.
+     */
+    public function searchtop(array $tmdbIds): array
+    {
+        $out = [];
+
+        foreach ($tmdbIds as $id) {
+            if (empty($id)) continue;
+
+            try {
+                $details = $this->getMovieDetails((int) $id);
+                if (!empty($details) && isset($details['id'])) {
+                    $out[(int)$details['id']] = $details;
+                }
+            } catch (\Exception $e) {
+                // ignore individual failures but continue
+                continue;
+            }
+        }
+
+        return $out;
+    }
+
+
     public function search(string $query, int $limit = 5): array
     {
         if (empty($query)) {

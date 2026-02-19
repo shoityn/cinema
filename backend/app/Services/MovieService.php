@@ -181,12 +181,16 @@ class MovieService
     public function createWithMedia(array $data): Movie
     {
         return DB::transaction(function () use ($data) {
-
             // TODO: Business rules to consider before creating:
             // - duplicate detection by tmdb_id (decide whether to update or fail)
             // - validation of provider-specific requirements (e.g. local file handling)
             // - selection/normalization of primary media when multiple items arrive
             // - any permission/owner attribution rules
+
+            // Simple duplicate check: fail when tmdb_id already exists.
+            if (!empty($data['tmdb_id']) && Movie::where('tmdb_id', $data['tmdb_id'])->exists()) {
+                throw new DomainException('Movie with tmdb_id already exists.');
+            }
 
             $movie = Movie::create([
                 'title' => $data['title'] ?? null,

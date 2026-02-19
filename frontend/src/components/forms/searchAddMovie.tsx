@@ -7,13 +7,13 @@ import { Loader2, Search } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 interface Movie {
-  id: number
+  tmdb_id: number
   title: string
   release_date?: string
-  poster_path?: string
+  poster_url?: string | null
 }
 
-export function SearchBar() {
+export function SearchBar({ onSelect }: { onSelect?: (movie: any) => void }) {
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<Movie[]>([])
   const [loading, setLoading] = useState(false)
@@ -32,7 +32,7 @@ export function SearchBar() {
         setLoading(true)
 
         const res = await fetch(
-          `/api/movies/search?q=${encodeURIComponent(query)}`
+          `http://localhost:8000/api/tmdb/search?q=${encodeURIComponent(query)}`
         )
 
         if (!res.ok) throw new Error("Erro na busca")
@@ -79,17 +79,44 @@ export function SearchBar() {
                 <ul className="space-y-1">
                   {results.map((movie) => (
                     <li
-                      key={movie.id}
-                      className="p-2 rounded-lg hover:bg-muted cursor-pointer transition"
+                      key={movie.tmdb_id}
+                      onClick={async () => {
+                        setQuery(movie.title)
+                        setOpen(false)
+                        setResults([])
+
+                        if (onSelect) {
+                          try {
+                            const res = await fetch(`http://localhost:8000/api/tmdb/movies/${movie.tmdb_id}`)
+                            if (res.ok) {
+                              const details = await res.json()
+                              onSelect(details)
+                            }
+                          } catch (e) {
+                            console.error('Erro ao obter detalhes TMDB', e)
+                          }
+                        }
+                      }}
+                      className="p-2 rounded-lg hover:bg-muted cursor-pointer transition flex items-center gap-3"
                     >
-                      <div className="text-sm font-medium">
-                        {movie.title}
-                      </div>
-                      {movie.release_date && (
-                        <div className="text-xs text-muted-foreground">
-                          {new Date(movie.release_date).getFullYear()}
-                        </div>
+                      {movie.poster_url ? (
+                        <img
+                          src={movie.poster_url}
+                          alt={movie.title}
+                          className="w-10 h-14 object-cover rounded"
+                        />
+                      ) : (
+                        <div className="w-10 h-14 bg-muted/30 rounded" />
                       )}
+
+                      <div className="flex-1">
+                        <div className="text-sm font-medium">{movie.title}</div>
+                        {movie.release_date && (
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(movie.release_date).getFullYear()}
+                          </div>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>

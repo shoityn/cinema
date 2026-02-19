@@ -20,21 +20,24 @@ Route::middleware('auth:sanctum')->group(function () {
 // Rotas CRUD para filmes com nomes padrão (filmes.index, filmes.store, ...)
 Route::prefix('movies')->group(function () {
     Route::get('/', [MovieController::class, 'index']);
-    Route::get('/{movie}', [MovieController::class, 'show']);
-    Route::post('/', [MovieController::class, 'store']);
-    Route::put('/{movie}', [MovieController::class, 'update']);
-    Route::patch('/{movie}/publish', [MovieController::class, 'publish']);
-    Route::patch('/{movie}/archive', [MovieController::class, 'archive']);
+    Route::get('/{movie}', [MovieController::class, 'show']); // colocar mais detalhes para puxar no método
+    Route::post('/', [MovieController::class, 'store']);   //retorna 200 ok mas não envia
+    Route::put('/{movie}', [MovieController::class, 'update']);//
+    Route::patch('/{movie}/publish', [MovieController::class, 'publish']);// retornar msg de sucesso
+    Route::patch('/{movie}/archive', [MovieController::class, 'archive']);// retornar mensagem de sucesso
 });
 
 Route::get('/tmdb/now-playing', [TmdbController::class, 'nowPlaying']);
 
-Route::get('/tmdb/search', [TmdbController::class, 'search']);
-
-// Detalhes completos (para preencher form)
-// Route::get('/movies/{tmdbId}', [TmdbController::class, 'details']);
 
 Route::prefix('tmdb')->group(function () {
     Route::get('/search', [TmdbController::class, 'search']); //
     Route::get('/movies/{tmdbId}', [TmdbController::class, 'details']);
 });
+    
+    
+    // Route::get('/tmdb/search', [TmdbController::class, 'search']);
+    
+    // Detalhes completos (para preencher form)
+    // Route::get('/movies/{tmdbId}', [TmdbController::class, 'details']);
+

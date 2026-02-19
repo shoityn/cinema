@@ -8,6 +8,7 @@ use App\Models\Movie;
 use App\Http\Resources\MovieResource;
 use App\Http\Requests\StoreMovieRequest;
 use App\Services\MovieService;
+use App\Models\Genre;
 use Illuminate\Http\JsonResponse;
 use DomainException;
 use Throwable;
@@ -37,8 +38,34 @@ class MovieController extends Controller
 
     public function store(StoreMovieRequest $request)
     {
+        $data = $request->all();
 
-        $data = $request->validated();
+        // Normalize incoming genres into an array of local genre IDs.
+        // Accepts either: [1,2,3] or [{"tmdb_id": 18, ...}, ...]
+        $incomingGenres = $data['genres'] ?? [];
+        $genreIds = [];
+
+        foreach ($incomingGenres as $g) {
+            if (is_int($g)) {
+                $genreIds[] = $g;
+                continue;
+            }
+
+            if (is_array($g) && isset($g['tmdb_id'])) {
+                $local = Genre::where('tmdb_id', $g['tmdb_id'])->first();
+                if ($local) {
+                    $genreIds[] = $local->genre_id;
+                }
+            }
+        }
+
+        // if (empty($genreIds)) {
+        //     return response()->json([
+        //         'message' => 'Nenhum gênero válido foi fornecido. Envie ids locais ou objetos com tmdb_id que já existam localmente.'
+        //     ], 422);
+        // }
+
+        $data['genres'] = $genreIds;
 
         // TODO: Implementar regras de negócio
         // - validar duplicidade por tmdb_id
@@ -46,11 +73,23 @@ class MovieController extends Controller
         // - selecionar mídia principal
         // - tratar provedores 'local' (salvar arquivos em storage quando aplicável)
 
-        return DB::transaction(function () use ($data) {
-            $movie = $this->service->createWithMedia($data);
+        try {
+            return DB::transaction(function () use ($data) {
+                $movie = $this->service->createWithMedia($data);
 
-            return (new MovieResource($movie))->response()->setStatusCode(201);
-        });
+                return response()->json([
+                    'message' => 'Filme criado com sucesso',
+                    'input' => $data,
+                    'data' => new MovieResource($movie->load(['genres', 'media'])),
+                ], 201);
+            });
+
+        } catch (Throwable $e) {
+            return response()->json([
+                'message' => 'Erro ao criar o filme',
+                'error' => $e->getMessage(),
+            ], 400);
+        }
     }
 
     public function update(Request $request, Movie $movie)
@@ -61,7 +100,6 @@ class MovieController extends Controller
             $movie = $this->service->update($movie, $data);
 
             return new MovieResource($movie->load(['genres', 'media']));
-
         } catch (Throwable $e) {
             return response()->json(['message' => $e->getMessage()], 500);
         }
@@ -72,10 +110,21 @@ class MovieController extends Controller
         try {
             $movie = $this->service->publish($movie);
 
-            return new MovieResource($movie->load(['genres', 'media']));
-
+            return response()->json([
+                'message' => 'Filme publicado com Sucesso',
+                'data' => new MovieResource($movie->load(['genres', 'media'])),
+            ]);
         } catch (DomainException $e) {
-            return response()->json(['message' => $e->getMessage()], 409);
+
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 409);
+        } catch (Throwable $e) {
+
+            return response()->json([
+                'message' => 'Erro ao publicar o filme',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -84,152 +133,21 @@ class MovieController extends Controller
         try {
             $movie = $this->service->archive($movie);
 
-            return new MovieResource($movie->load(['genres', 'media']));
-
+            return response()->json([
+                'message' => 'filme arquivado com sucesso',
+                'data' => new MovieResource($movie->load(['genres', 'media'])),
+            ]);
         } catch (DomainException $e) {
-            return response()->json(['message' => $e->getMessage()], 409);
+
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 409);
+        } catch (Throwable $e) {
+
+            return response()->json([
+                'message' => 'Erro ao Arquivar o filme',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 }
-// <?php
-
-// namespace App\Http\Controllers;
-
-// use App\Http\Requests\StoreMovieRequest;
-// use App\Http\Requests\UpdateMovieRequest;
-// use App\Http\Resources\MovieResource;
-// use App\Models\Movie;
-// use App\Services\MovieService;
-// use Illuminate\Http\JsonResponse;
-// use DomainException;
-// use Throwable;
-
-// class MovieController extends Controller
-// {
-//     public function __construct(
-//         private MovieService $movieService
-//     ) {}
-
-//     public function index(): JsonResponse
-//     {
-//         $movies = Movie::query()
-//             ->where('status', 'published')
-//             ->with(['genres', 'media'])
-//             ->orderByDesc('created_at')
-//             ->paginate(15);
-
-//         return response()->json([
-//             'data' => MovieResource::collection($movies),
-//             'meta' => [
-//                 'current_page' => $movies->currentPage(),
-//                 'last_page' => $movies->lastPage(),
-//                 'per_page' => $movies->perPage(),
-//                 'total' => $movies->total(),
-//             ]
-//         ]);
-//     }
-
-//     public function store(StoreMovieRequest $request): JsonResponse
-//     {
-
-//         try {
-//             $movie = $this->movieService->create($request->validated());
-
-//             return response()->json($movie, 201);
-
-//             return response()->json([
-//                 'message' => 'Filmes Criado com Sucesso',
-//                 'data' => new MovieResource($movie->load(['genres', 'media'])),
-//             ], 201);
-
-//         } catch (Throwable $e) {
-
-//             return response()->json([
-//                 'message' => 'Erro ao Criar o Filme',
-//                 'error' => $e->getMessage(),
-//             ], 500);
-//         }
-//     }
-
-//     public function show(Movie $movie): JsonResponse
-//     {
-//         if ($movie->status !== 'published') {
-//             return response()->json([
-//                 'message' => 'Filmes não encontrado'
-//             ], 404);
-//         }
-
-//         return response()->json([
-//             'data' => new MovieResource($movie->load(['genres', 'media'])),
-//         ]);
-//     }
-
-//     public function update(UpdateMovieRequest $request, Movie $movie): JsonResponse
-//     {
-//         try {
-//             $movie = $this->movieService->update($movie, $request->validated());
-
-//             return response()->json([
-//                 'message' => 'Filme atualizado Com Sucesso',
-//                 'data' => new MovieResource($movie->load(['genres', 'media'])),
-//             ]);
-
-//         } catch (Throwable $e) {
-
-//             return response()->json([
-//                 'message' => 'Erro ao atualizar o filme',
-//                 'error' => $e->getMessage(),
-//             ], 500);
-//         }
-//     }
-
-//     public function archive(Movie $movie): JsonResponse
-//     {
-//         try {
-//             $movie = $this->movieService->archive($movie);
-
-//             return response()->json([
-//                 'message' => 'filme arquivado com sucesso',
-//                 'data' => new MovieResource($movie->load(['genres', 'media'])),
-//             ]);
-
-//         } catch (DomainException $e) {
-
-//             return response()->json([
-//                 'message' => $e->getMessage(),
-//             ], 409);
-
-//         } catch (Throwable $e) {
-
-//             return response()->json([
-//                 'message' => 'Erro ao Arquivar o filme',
-//                 'error' => $e->getMessage(),
-//             ], 500);
-//         }
-//     }
-
-//     public function publish(Movie $movie): JsonResponse
-//     {
-//         try {
-//             $movie = $this->movieService->publish($movie);
-
-//             return response()->json([
-//                 'message' => 'Filme publicado com Sucesso',
-//                 'data' => new MovieResource($movie->load(['genres', 'media'])),
-//             ]);
-
-//         } catch (DomainException $e) {
-
-//             return response()->json([
-//                 'message' => $e->getMessage(),
-//             ], 409);
-
-//         } catch (Throwable $e) {
-
-//             return response()->json([
-//                 'message' => 'Erro ao publicar o filme',
-//                 'error' => $e->getMessage(),
-//             ], 500);
-//         }
-//     }
-// }

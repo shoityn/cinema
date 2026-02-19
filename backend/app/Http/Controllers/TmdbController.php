@@ -28,19 +28,68 @@ class TmdbController extends Controller
 
         $results = $this->tmdb->search($q, 20);
 
-        // Normalize to a small payload for frontend selection
-        $list = array_map(function ($m) {
-            return [
-                'tmdb_id' => $m['tmdb_id'] ?? null,
-                'title' => $m['titulo'] ?? ($m['title'] ?? null),
-                'overview' => $m['sinopse'] ?? null,
-                'poster_url' => $m['poster_url'] ?? null,
-                'backdrop_url' => $m['backdrop_url'] ?? null,
-                'release_date' => $m['data_lancamento'] ?? null,
-            ];
-        }, $results);
+            // Normalize to a small payload for frontend selection
+            $list = array_map(function ($m) {
+                return [
+                    'tmdb_id' => isset($m['tmdb_id']) ? (int) $m['tmdb_id'] : (isset($m['id']) ? (int) $m['id'] : null),
+                    'title' => $m['titulo'] ?? ($m['title'] ?? null),
+                    'overview' => $m['sinopse'] ?? ($m['overview'] ?? null) ?? '',
+                    'poster_url' => $m['poster_url'] ?? (isset($m['poster_path']) ? "https://image.tmdb.org/t/p/w500{$m['poster_path']}" : null),
+                    'backdrop_url' => $m['backdrop_url'] ?? (isset($m['backdrop_path']) ? "https://image.tmdb.org/t/p/w780{$m['backdrop_path']}" : null),
+                    'release_date' => $m['data_lancamento'] ?? ($m['release_date'] ?? null),
+                ];
+            }, (array) $results);
 
-        return response()->json(array_values($list));
+            // Collect tmdb ids to fetch details
+            $ids = array_values(array_filter(array_map(function ($i) { return $i['tmdb_id'] ?? null; }, $list)));
+
+            $detailsMap = [];
+            if (!empty($ids)) {
+                $detailsMap = $this->tmdb->searchtop($ids); // returns keyed array by id
+            }
+
+            // Merge details into the normalized list when available.
+            $enriched = array_map(function ($item) use ($detailsMap) {
+                $id = $item['tmdb_id'];
+                if ($id && isset($detailsMap[$id])) {
+                    $d = $detailsMap[$id];
+
+                    // Map TMDB detail fields into our payload shape
+                    $item['adult'] = $d['adult'] ?? false;
+                    $item['backdrop_path'] = $d['backdrop_path'] ?? null;
+                    $item['belongs_to_collection'] = $d['belongs_to_collection'] ?? null;
+                    $item['budget'] = $d['budget'] ?? null;
+                    $item['genres'] = array_map(function ($g) {
+                        return ['id' => $g['id'] ?? null, 'name' => $g['name'] ?? null];
+                    }, $d['genres'] ?? []);
+                    $item['homepage'] = $d['homepage'] ?? null;
+                    $item['id'] = $d['id'] ?? $id;
+                    $item['imdb_id'] = $d['imdb_id'] ?? null;
+                    $item['original_language'] = $d['original_language'] ?? null;
+                    $item['original_title'] = $d['original_title'] ?? null;
+                    $item['popularity'] = $d['popularity'] ?? null;
+                    $item['poster_path'] = $d['poster_path'] ?? null;
+                    $item['production_companies'] = $d['production_companies'] ?? [];
+                    $item['production_countries'] = $d['production_countries'] ?? [];
+                    $item['release_date'] = $d['release_date'] ?? $item['release_date'];
+                    $item['revenue'] = $d['revenue'] ?? null;
+                    $item['runtime'] = $d['runtime'] ?? null;
+                    $item['spoken_languages'] = $d['spoken_languages'] ?? [];
+                    $item['status'] = $d['status'] ?? null;
+                    $item['tagline'] = $d['tagline'] ?? null;
+                    $item['video'] = $d['video'] ?? false;
+                    $item['vote_average'] = $d['vote_average'] ?? null;
+                    $item['vote_count'] = $d['vote_count'] ?? null;
+                }
+
+                return $item;
+            }, $list);
+
+            return response()->json(array_values($enriched));
+
+         $lits2 = $this->tmdb->searchtop($list['tmdb_id']);
+
+        return response()->json(array_values($list, $list2));
     }
 
     /**

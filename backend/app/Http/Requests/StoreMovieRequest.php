@@ -21,7 +21,9 @@ class StoreMovieRequest extends FormRequest
             'tmdb_id' => ['nullable', 'integer'],
 
             'genres' => ['required', 'array'],
-            'genres.*' => ['integer', 'exists:genres,genre_id'],
+            // allow either an array of local ids or an array of objects returned from TMDB
+            // we'll normalize in the controller before persisting
+            'genres.*' => ['present'],
 
             'media' => ['required', 'array'],
 
