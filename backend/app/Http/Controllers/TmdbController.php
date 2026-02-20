@@ -26,7 +26,7 @@ class TmdbController extends Controller
             return response()->json([]);
         }
 
-        $results = $this->tmdb->search($q, 20);
+        $results = $this->tmdb->search($q, 5);
 
             // Normalize to a small payload for frontend selection
             $list = array_map(function ($m) {

@@ -1,7 +1,8 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
 
-if (!API_URL) {
-  throw new Error("NEXT_PUBLIC_API_URL não definida");
+if (!process.env.NEXT_PUBLIC_API_URL) {
+
+  console.warn("WARNING: NEXT_PUBLIC_API_URL não definida — usando fallback http://localhost:8000/api");
 }
 
 export async function api<T>(

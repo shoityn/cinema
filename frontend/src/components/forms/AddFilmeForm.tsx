@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,8 +16,17 @@ import {
 } from "@/components/ui/select";
 
 import { useEffect } from "react";
+import { createMovie, updateMovie } from "@/lib/services/movies";
 
-export function AddFilmeForm({ initial }: { initial?: any | null } = { initial: null }) {
+interface AddFilmeFormProps {
+  initial?: any | null;
+  movieId?: number;
+  isEditing?: boolean;
+}
+
+export function AddFilmeForm({ initial, movieId, isEditing = false }: AddFilmeFormProps = { initial: null }) {
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     // movie fields expected by backend
     title: "",
@@ -26,7 +36,7 @@ export function AddFilmeForm({ initial }: { initial?: any | null } = { initial: 
     tmdb_id: "",
     imdb_id: "",
     homepage: "",
-    status: "draft",
+    status: "published",
 
     // genres: array of objects { tmdb_id, name }
     genres: [{ tmdb_id: "", name: "" }],
@@ -95,8 +105,10 @@ export function AddFilmeForm({ initial }: { initial?: any | null } = { initial: 
     }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setSubmitting(true);
+
     // build payload matching backend expected structure
     const payload = {
       title: formData.title,
@@ -134,24 +146,23 @@ export function AddFilmeForm({ initial }: { initial?: any | null } = { initial: 
       },
     };
 
-    fetch("http://localhost:8000/api/movies", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify(payload),
-    })
-      .then(async (res) => {
-        const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.message || "Erro ao criar");
-        console.log("Criado com sucesso:", data);
+    try {
+      if (isEditing && movieId) {
+        // Update existing movie
+        await updateMovie(movieId, payload);
+        alert("Filme atualizado com sucesso");
+      } else {
+        // Create new movie
+        await createMovie(payload);
         alert("Filme criado com sucesso");
-      })
-      .catch((err) => {
-        console.error(err);
-        alert("Erro: " + err.message);
-      });
+      }
+      router.push("/dashboard");
+    } catch (err: any) {
+      console.error(err);
+      alert("Erro: " + err.message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   // When `initial` changes (selected from search), populate the form with details
@@ -259,9 +270,9 @@ export function AddFilmeForm({ initial }: { initial?: any | null } = { initial: 
                 <SelectValue placeholder="Selecione o status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="published">Published</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
+                <SelectItem value="published">Publicado</SelectItem>
+                <SelectItem value="archived">Arquivado</SelectItem>
+                <SelectItem value="draft">Rascunho</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -330,8 +341,8 @@ export function AddFilmeForm({ initial }: { initial?: any | null } = { initial: 
             </div>
           </div>
 
-          <Button type="submit" className="w-full">
-            Salvar Filme
+          <Button type="submit" className="w-full" disabled={submitting}>
+            {submitting ? "Salvando..." : isEditing ? "Atualizar Filme" : "Salvar Filme"}
           </Button>
         </form>
       </CardContent>
