@@ -22,7 +22,22 @@ class MediaUrlResolver
         }
 
         if ($media->provider === 'local') {
-            return asset("storage/{$media->path}");
+            // Files are saved under public/imgs and stored as "imgs/filename.ext".
+            // Return a public URL under the webroot: /imgs/filename.ext
+            $path = (string) $media->path;
+            $path = ltrim($path, '/');
+
+            // If path was accidentally stored with a storage/ prefix, strip it.
+            if (strpos($path, 'storage/backend/public/') === 0) {
+                $path = substr($path, strlen('storage/backend/public/'));
+            }
+
+            // if (strpos($path, 'storage/backend/public') === 0) {
+            //     $path = substr($path, strlen('storage/backend/public'));
+            
+            // }
+
+            return asset($path);
         }
 
         return null;

@@ -11,6 +11,17 @@ class StoreMovieRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        // If genres were sent as a JSON string (FormData), decode into array before validation
+        if ($this->has('genres') && is_string($this->input('genres'))) {
+            $decoded = json_decode($this->input('genres'), true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $this->merge(['genres' => $decoded]);
+            }
+        }
+    }
+
     public function rules()
     {
         return [

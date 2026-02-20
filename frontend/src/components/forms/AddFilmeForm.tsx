@@ -27,7 +27,7 @@ interface AddFilmeFormProps {
 export function AddFilmeForm({ initial, movieId, isEditing = false }: AddFilmeFormProps = { initial: null }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<any>({
     // movie fields expected by backend
     title: "",
     overview: "",
@@ -43,10 +43,10 @@ export function AddFilmeForm({ initial, movieId, isEditing = false }: AddFilmeFo
 
     // media: poster/backdrop/logo/trailer
     media: {
-      poster: { provider: "tmdb", path: "", url: "" },
-      backdrop: { provider: "tmdb", path: "", url: "" },
-      logo: { provider: "tmdb", path: "", url: "" },
-      trailer: { provider: "tmdb", external_key: "", url: "" },
+      poster: { provider: "tmdb", path: "", url: "", file: null },
+      backdrop: { provider: "tmdb", path: "", url: "", file: null },
+      logo: { provider: "tmdb", path: "", url: "", file: null },
+      trailer: { provider: "tmdb", external_key: "", url: "", file: null },
     },
   });
 
@@ -83,15 +83,15 @@ export function AddFilmeForm({ initial, movieId, isEditing = false }: AddFilmeFo
     setFormData((prev) => ({ ...prev, genres: prev.genres.filter((_, idx) => idx !== i) }));
   }
 
-  function updateMedia(section: string, key: string, value: string) {
-    setFormData((prev) => ({
+  function updateMedia(section: string, key: string, value: any) {
+    setFormData((prev: any) => ({
       ...prev,
       media: (() => {
         const defaultMedia = {
-          poster: { provider: "tmdb", path: "", url: "" },
-          backdrop: { provider: "tmdb", path: "", url: "" },
-          logo: { provider: "tmdb", path: "", url: "" },
-          trailer: { provider: "tmdb", external_key: "", url: "" },
+          poster: { provider: "tmdb", path: "", url: "", file: null },
+          backdrop: { provider: "tmdb", path: "", url: "", file: null },
+          logo: { provider: "tmdb", path: "", url: "", file: null },
+          trailer: { provider: "tmdb", external_key: "", url: "", file: null },
         };
         const media = (prev as any).media ?? defaultMedia;
         return {
@@ -127,21 +127,25 @@ export function AddFilmeForm({ initial, movieId, isEditing = false }: AddFilmeFo
           provider: formData.media.poster.provider,
           path: formData.media.poster.path || null,
           url: formData.media.poster.url || null,
+          file: formData.media.poster.file ?? null,
         },
         backdrop: {
           provider: formData.media.backdrop.provider,
           path: formData.media.backdrop.path || null,
           url: formData.media.backdrop.url || null,
+          file: formData.media.backdrop.file ?? null,
         },
         logo: {
           provider: formData.media.logo.provider,
           path: formData.media.logo.path || null,
           url: formData.media.logo.url || null,
+          file: formData.media.logo.file ?? null,
         },
         trailer: {
           provider: formData.media.trailer.provider,
           external_key: formData.media.trailer.external_key || null,
           url: formData.media.trailer.url || null,
+          file: formData.media.trailer.file ?? null,
         },
       },
     };
@@ -295,8 +299,19 @@ export function AddFilmeForm({ initial, movieId, isEditing = false }: AddFilmeFo
             <Label>Mídia (poster/backdrop/logo)</Label>
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <Label>Poster - path</Label>
-                <Input value={formData.media.poster.path} onChange={(e) => updateMedia('poster', 'path', e.target.value)} />
+                <Label>Poster</Label>
+                {formData.media.poster.provider === 'local' ? (
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => updateMedia('poster', 'file', e.target.files?.[0] ?? null)}
+                  />
+                ) : (
+                  <>
+                    <Label>Poster - path</Label>
+                    <Input value={formData.media.poster.path} onChange={(e) => updateMedia('poster', 'path', e.target.value)} />
+                  </>
+                )}
                 <Label>provider</Label>
                 <Select value={formData.media.poster.provider} onValueChange={(v) => updateMedia('poster', 'provider', v)}>
                   <SelectTrigger>
@@ -310,8 +325,19 @@ export function AddFilmeForm({ initial, movieId, isEditing = false }: AddFilmeFo
               </div>
 
               <div>
-                <Label>Backdrop - path</Label>
-                <Input value={formData.media.backdrop.path} onChange={(e) => updateMedia('backdrop', 'path', e.target.value)} />
+                <Label>Backdrop</Label>
+                {formData.media.backdrop.provider === 'local' ? (
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => updateMedia('backdrop', 'file', e.target.files?.[0] ?? null)}
+                  />
+                ) : (
+                  <>
+                    <Label>Backdrop - path</Label>
+                    <Input value={formData.media.backdrop.path} onChange={(e) => updateMedia('backdrop', 'path', e.target.value)} />
+                  </>
+                )}
                 <Label>provider</Label>
                 <Select value={formData.media.backdrop.provider} onValueChange={(v) => updateMedia('backdrop', 'provider', v)}>
                   <SelectTrigger>
@@ -325,8 +351,19 @@ export function AddFilmeForm({ initial, movieId, isEditing = false }: AddFilmeFo
               </div>
 
               <div>
-                <Label>Logo - path</Label>
-                <Input value={formData.media.logo.path} onChange={(e) => updateMedia('logo', 'path', e.target.value)} />
+                <Label>Logo</Label>
+                {formData.media.logo.provider === 'local' ? (
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => updateMedia('logo', 'file', e.target.files?.[0] ?? null)}
+                  />
+                ) : (
+                  <>
+                    <Label>Logo - path</Label>
+                    <Input value={formData.media.logo.path} onChange={(e) => updateMedia('logo', 'path', e.target.value)} />
+                  </>
+                )}
                 <Label>provider</Label>
                 <Select value={formData.media.logo.provider} onValueChange={(v) => updateMedia('logo', 'provider', v)}>
                   <SelectTrigger>

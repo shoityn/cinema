@@ -120,14 +120,7 @@ export default function MovieDetails() {
             </div>
             
             {/* Actions */}
-            <div className="mt-6 space-y-3">
-              <Link
-                href={`/dashboard/add_filme?id=${movie.movie_id}`}
-                className="block w-full bg-primary text-primary-foreground py-2 px-4 rounded-lg text-center font-semibold hover:opacity-90 transition"
-              >
-                Editar Filme
-              </Link>
-              
+            <div className="mt-6 space-y-3"> 
               {movie.media?.trailer?.url && (
                 <a
                   href={movie.media.trailer.url}
@@ -135,7 +128,7 @@ export default function MovieDetails() {
                   rel="noreferrer"
                   className="block w-full bg-secondary text-secondary-foreground py-2 px-4 rounded-lg text-center font-semibold hover:opacity-90 transition"
                 >
-                  ▶ Assitir Trailer
+                  Assitir Trailer
                 </a>
               )}
             </div>

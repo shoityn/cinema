@@ -20,7 +20,7 @@ return new class extends Migration
             $table->unsignedInteger('duration_minutes')->nullable();
 
             $table->enum('status', ['draft', 'published', 'archived'])
-                ->default('draft');
+                ->default('published');
 
             $table->unsignedBigInteger('tmdb_id')->nullable()->unique();
             $table->string('imdb_id')->nullable();

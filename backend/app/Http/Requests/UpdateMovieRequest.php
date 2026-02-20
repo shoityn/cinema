@@ -12,6 +12,17 @@ class UpdateMovieRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        // Allow genres sent as JSON string in FormData to be decoded before validation
+        if ($this->has('genres') && is_string($this->input('genres'))) {
+            $decoded = json_decode($this->input('genres'), true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $this->merge(['genres' => $decoded]);
+            }
+        }
+    }
+
     public function rules(): array
     {
         return [

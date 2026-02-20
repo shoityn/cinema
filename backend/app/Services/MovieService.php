@@ -18,7 +18,7 @@ class MovieService
         return DB::transaction(function () use ($data): Movie {
 
             if (empty($data['status'])) {
-                $data['status'] = 'draft';
+                $data['status'] = 'published';
             }
 
             return Movie::create($data);
@@ -61,7 +61,7 @@ class MovieService
                     'movie_id' => $movie->movie_id,
                     'type' => 'poster',
                     'provider' => 'tmdb',
-                    'path' => $first['file_path'] ?? null,
+                    'path' => $this->normalizePath($first['file_path'] ?? null),
                     'metadata' => $first,
                     'is_primary' => true,
                 ]);
@@ -74,7 +74,7 @@ class MovieService
                     'movie_id' => $movie->movie_id,
                     'type' => 'backdrop',
                     'provider' => 'tmdb',
-                    'path' => $first['file_path'] ?? null,
+                    'path' => $this->normalizePath($first['file_path'] ?? null),
                     'metadata' => $first,
                     'is_primary' => true,
                 ]);
@@ -87,7 +87,7 @@ class MovieService
                     'movie_id' => $movie->movie_id,
                     'type' => 'logo',
                     'provider' => 'tmdb',
-                    'path' => $first['file_path'] ?? null,
+                    'path' => $this->normalizePath($first['file_path'] ?? null),
                     'metadata' => $first,
                     'is_primary' => true,
                 ]);
@@ -139,9 +139,49 @@ class MovieService
     {
         return DB::transaction(function () use ($movie, $data) {
 
-            $movie->update($data);
+            // If genres were provided as an array of local ids, sync them
+            if (isset($data['genres']) && is_array($data['genres'])) {
+                $movie->genres()->sync($data['genres']);
+            }
 
-            return $movie->fresh();
+            // If media payload provided, upsert media records for each type
+            if (isset($data['media']) && is_array($data['media'])) {
+                $types = ['poster', 'backdrop', 'logo', 'trailer'];
+                foreach ($types as $type) {
+                    if (empty($data['media'][$type]) || !is_array($data['media'][$type])) {
+                        continue;
+                    }
+
+                    $m = $data['media'][$type];
+
+                    $mediaData = [
+                        'movie_id' => $movie->movie_id,
+                        'type' => $type,
+                        'provider' => $m['provider'] ?? 'tmdb',
+                        'path' => $this->normalizePath($m['path'] ?? null),
+                        'external_key' => $m['external_key'] ?? null,
+                        'metadata' => $m['metadata'] ?? null,
+                        'is_primary' => $m['is_primary'] ?? true,
+                    ];
+
+                    $existing = Media::where('movie_id', $movie->movie_id)->where('type', $type)->first();
+                    if ($existing) {
+                        $existing->update($mediaData);
+                    } else {
+                        Media::create($mediaData);
+                    }
+                }
+            }
+
+            // Update top-level movie fields (excluding media/genres which were handled)
+            $movieData = $data;
+            unset($movieData['media'], $movieData['genres']);
+
+            if (!empty($movieData)) {
+                $movie->update($movieData);
+            }
+
+            return $movie->fresh()->load(['genres', 'media']);
         });
     }
 
@@ -219,7 +259,7 @@ class MovieService
                     'movie_id' => $movie->movie_id,
                     'type' => $type,
                     'provider' => $m['provider'] ?? 'tmdb',
-                    'path' => $m['path'] ?? null,
+                    'path' => $this->normalizePath($m['path'] ?? null),
                     'external_key' => $m['external_key'] ?? null,
                     'metadata' => $m['metadata'] ?? null,
                     'is_primary' => true, // default incoming single items as primary
@@ -235,5 +275,49 @@ class MovieService
 
             return $movie->fresh()->load(['genres', 'media']);
         });
+    }
+
+    /**
+     * Normalize a stored media path to a relative public path under the webroot.
+     * Removes prefixes like 'storage/', 'backend/', 'public/' and collapses
+     * duplicate 'imgs/' occurrences.
+     */
+    private function normalizePath(?string $path): ?string
+    {
+        if ($path === null) {
+            return null;
+        }
+
+        $p = (string) $path;
+        $p = trim($p);
+        $p = ltrim($p, '/');
+
+        // Remove common unwanted prefixes repeatedly
+        $prefixes = ['storage/', 'backend/', 'public/'];
+        $changed = true;
+        while ($changed) {
+            $changed = false;
+            foreach ($prefixes as $pref) {
+                if (strpos($p, $pref) === 0) {
+                    $p = substr($p, strlen($pref));
+                    $p = ltrim($p, '/');
+                    $changed = true;
+                }
+            }
+        }
+
+        // Collapse duplicate imgs/ occurrences (e.g. imgs/imgs/foo or imgs/fooimgs/foo)
+        // Ensure only single leading 'imgs/' remains and cut any accidental repeated suffix.
+        // First, if the path contains 'imgs/' more than once, take substring from first 'imgs/' occurrence.
+        $pos = strpos($p, 'imgs/');
+        if ($pos !== false) {
+            $p = substr($p, $pos);
+        }
+
+        // Remove accidental concatenations like '...pngimgs/...'
+        $p = str_replace('pngimgs/', 'png/', $p);
+        $p = str_replace('jpgimgs/', 'jpg/', $p);
+
+        return $p;
     }
 }

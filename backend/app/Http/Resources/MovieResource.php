@@ -20,11 +20,15 @@ class MovieResource extends JsonResource
         'movie_id' => $this->movie_id,
         'title' => $this->title,
         'overview' => $this->overview,
+        'status' => $this->status,
         'release_date' => $this->release_date ? $this->release_date->toDateString() : null,
         'duration_minutes' => $this->duration_minutes,
         'tmdb_id' => $this->tmdb_id,
         'imdb_id' => $this->imdb_id,
         'homepage' => $this->homepage,
+
+        // Convenience top-level poster/backdrop urls for frontend
+        'poster_url' => $poster ? $resolver->resolve($poster) : null,
 
         'genres' => GenreResource::collection($this->whenLoaded('genres')),
 
