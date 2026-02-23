@@ -3,7 +3,9 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MovieController;
 use App\Http\Controllers\TmdbController;
+use App\Http\Controllers\Auth\PasswordController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Http\Request;
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -17,6 +19,9 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
+Route::post('/forgot-password', [PasswordController::class, 'forgot']);
+Route::post('/reset-password', [PasswordController::class, 'reset']);
+
 // Rotas CRUD para filmes com nomes padrão (filmes.index, filmes.store, ...)
 Route::prefix('movies')->group(function () {
     Route::get('/', [MovieController::class, 'index']);
@@ -26,6 +31,7 @@ Route::prefix('movies')->group(function () {
     Route::patch('/{movie}/publish', [MovieController::class, 'publish']);// retornar msg de sucesso
     Route::patch('/{movie}/archive', [MovieController::class, 'archive']);// retornar mensagem de sucesso
 });
+
 
 Route::get('/tmdb/now-playing', [TmdbController::class, 'nowPlaying']);
 
