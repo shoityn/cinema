@@ -1,13 +1,9 @@
+import { LoginForm } from "@/components/forms/auth/login-form"
 
-
-
-export default function Login(){
- return(
-   <div>
-    <h1>Página de Login</h1>
-  
-  
-  </div>
- )
+export default function Login() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <LoginForm />
+    </div>
+  )
 }
-
