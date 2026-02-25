@@ -11,40 +11,53 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { toast } from "sonner"
+
+import { validateLoginForm } from "@/utils/validateLoginForm"
+import { useLogin } from "@/hooks/useLogin"
 
 export function LoginForm() {
   const router = useRouter()
+  const { login, loading } = useLogin()
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [focusedField, setFocusedField] = useState<string | null>(null)
+
+  function getInputClass(field: string) {
+    if (errors[field] && focusedField !== field) {
+      return "border-red-500"
+    }
+    return ""
+  }
+
+  function clearFieldError(field: string) {
+    if (errors[field]) {
+      setErrors((prev) => {
+        const updated = { ...prev }
+        delete updated[field]
+        return updated
+      })
+    }
+  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true)
+
+    const validationErrors = validateLoginForm({ email, password })
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
+      toast.warning("Corrija os campos destacados.")
+      return
+    }
 
     try {
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Erro ao fazer login")
-      }
-
+      await login({ email, password })
       router.push("/dashboard")
     } catch (error) {
-      console.error(error)
-      alert("Credenciais inválidas")
-    } finally {
-      setLoading(false)
+      toast.error("Credenciais inválidas")
     }
   }
 
@@ -62,8 +75,13 @@ export function LoginForm() {
               type="email"
               placeholder="email@email.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              onChange={(e) => {
+                setEmail(e.target.value)
+                clearFieldError("email")
+              }}
+              onFocus={() => setFocusedField("email")}
+              onBlur={() => setFocusedField(null)}
+              className={getInputClass("email")}
             />
           </div>
 
@@ -73,8 +91,13 @@ export function LoginForm() {
               type="password"
               placeholder="********"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              onChange={(e) => {
+                setPassword(e.target.value)
+                clearFieldError("password")
+              }}
+              onFocus={() => setFocusedField("password")}
+              onBlur={() => setFocusedField(null)}
+              className={getInputClass("password")}
             />
           </div>
 

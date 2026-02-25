@@ -1,60 +1,77 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { validateRegisterForm } from "@/utils/validateRegisterform";
+import { useRegister } from "@/hooks/useRegister";
 
 export function RegisterForm() {
-  const router = useRouter()
+  const router = useRouter();
+  const { register } = useRegister();
 
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [passwordConfirmation, setPasswordConfirmation] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   async function handleRegister(e: React.FormEvent) {
-    e.preventDefault()
+    e.preventDefault();
 
-    if (password !== passwordConfirmation) {
-      alert("As senhas não coincidem")
-      return
+    const validationErrors = validateRegisterForm({
+      name,
+      email,
+      password,
+      passwordConfirmation,
+    });
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors as Record<string, string>);
+      toast.warning("Corrija os campos destacados.");
+      return;
     }
 
-    setLoading(true)
+    setErrors({});
+    setLoading(true);
 
     try {
-      const response = await fetch("/api/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          password_confirmation: passwordConfirmation,
-        }),
-      })
+      await register({
+        name,
+        email,
+        password,
+        passwordConfirmation,
+      });
 
-      if (!response.ok) {
-        throw new Error("Erro ao criar conta")
-      }
-
-      router.push("/login")
+      router.push("/login");
     } catch (error) {
-      console.error(error)
-      alert("Erro ao registrar")
+      toast.error("Erro ao criar conta.");
     } finally {
-      setLoading(false)
+      setLoading(false);
+    }
+  }
+
+  function getInputClass(field: string) {
+    if (errors[field] && focusedField !== field) {
+      return "border-red-500";
+    }
+    return "";
+  }
+
+  function clearFieldError(field: string) {
+    if (errors[field]) {
+      setErrors((prev) => {
+        const updated = { ...prev };
+        delete updated[field];
+        return updated;
+      });
     }
   }
 
@@ -69,11 +86,15 @@ export function RegisterForm() {
           <div className="space-y-2">
             <Label>Nome</Label>
             <Input
-              type="text"
-              placeholder="Nome"
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
+              placeholder="Nome"
+              onChange={(e) => {
+                setName(e.target.value);
+                clearFieldError("name");
+              }}
+              onFocus={() => setFocusedField("name")}
+              onBlur={() => setFocusedField(null)}
+              className={getInputClass("name")}
             />
           </div>
 
@@ -81,10 +102,15 @@ export function RegisterForm() {
             <Label>Email</Label>
             <Input
               type="email"
-              placeholder="email@email.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              placeholder="Email"
+              onChange={(e) => {
+                setEmail(e.target.value);
+                clearFieldError("email");
+              }}
+              onFocus={() => setFocusedField("email")}
+              onBlur={() => setFocusedField(null)}
+              className={getInputClass("email")}
             />
           </div>
 
@@ -92,10 +118,15 @@ export function RegisterForm() {
             <Label>Senha</Label>
             <Input
               type="password"
-              placeholder="********"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              placeholder="********"
+              onChange={(e) => {
+                setPassword(e.target.value);
+                clearFieldError("password");
+              }}
+              onFocus={() => setFocusedField("password")}
+              onBlur={() => setFocusedField(null)}
+              className={getInputClass("password")}
             />
           </div>
 
@@ -103,10 +134,15 @@ export function RegisterForm() {
             <Label>Confirmar Senha</Label>
             <Input
               type="password"
-              placeholder="********"
               value={passwordConfirmation}
-              onChange={(e) => setPasswordConfirmation(e.target.value)}
-              required
+              placeholder="********"
+              onChange={(e) => {
+                setPasswordConfirmation(e.target.value);
+                clearFieldError("passwordConfirmation");
+              }}
+              onFocus={() => setFocusedField("passwordConfirmation")}
+              onBlur={() => setFocusedField(null)}
+              className={getInputClass("passwordConfirmation")}
             />
           </div>
 
@@ -116,5 +152,5 @@ export function RegisterForm() {
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }
